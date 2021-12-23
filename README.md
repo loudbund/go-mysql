@@ -82,4 +82,27 @@ mysql_v1.Handle().DescTable
 mysql_v1.Handle().Exec
 mysql_v1.Handle().QueryAllCircle
 ```
+## 特殊函数 QueryAllCircle
+快速遍历数据表的特殊封装，其原理是按主键排序快速取出数据，取数据的条件只有主键id，故速度非常快，可以达到10万/秒
+```golang
+
+Len :=0
+if err := mysql_v1.Handle().QueryAllCircle(mysql_v1.UFastQuery{
+    Table:    "user",        // 数据表名称
+    Fields:   "*",           // 读取字段，默认将加上主键字段
+    PriField: "userid",      // 主键字段名
+    PriSort:  "asc",         // 遍历顺序 (asc/desc)
+    RowLimit: 2000,          // 单次读取行数，针对有大数据字段的表，该值适当减小
+    // BeginVal:        3,   // 主键起点值，不设置则程序自动识别
+    // beginValIgnore: true, // 是否包含主键起点值，默认不包含
+}, func(V map[string]interface{}) bool {
+    // 这里处理一条数据V
+    Len++
+
+    //
+    return true
+}); err != nil {
+    log.Error(err)
+}
+```
 ## end
