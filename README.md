@@ -8,6 +8,11 @@ go-pool是基于database/sql和github.com/go-sql-driver/mysql提供的一组数�
 ## 安装
 go get github.com/loudbund/go-mysql
 
+## 引入
+```golang
+import "github.com/loudbund/go-mysql/mysql_v1"
+```
+
 ## 配置文件示例 test.conf
 ```db.conf
 # 默认数据库
