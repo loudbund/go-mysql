@@ -28,7 +28,7 @@ maxConn     = 19            ; 最大连接数
 
 # 指定数据库
 [db_test]
-host        = 182.10.0.102
+host        = 127.0.0.1 
 port        = 3306
 db          = test
 username    = root
