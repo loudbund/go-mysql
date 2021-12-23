@@ -108,7 +108,7 @@ if err := mysql_v1.Handle().QueryAllCircle(mysql_v1.UFastQuery{
     // 这里处理一条数据V
     Len++
 
-    //
+    // 返回true则会继续回调下一条，false则终止回调
     return true
 }); err != nil {
     log.Error(err)
