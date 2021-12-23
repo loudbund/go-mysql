@@ -109,4 +109,8 @@ if err := mysql_v1.Handle().QueryAllCircle(mysql_v1.UFastQuery{
     log.Error(err)
 }
 ```
-## end
+## 关于 example.go
+1. 示例代码运行，需要一个可操作的数据库。 请修改 test.conf 的 [db_defaut] 配置
+2. 运行示例代码，将会在配置的数据库里创建一张 demo表，并产生测试数据
+3. 执行 go run example.go 运行示例代码
+4. 详见 example.go 源码
