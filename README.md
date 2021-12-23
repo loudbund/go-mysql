@@ -8,7 +8,7 @@ go-pool是基于database/sql和github.com/go-sql-driver/mysql提供的一组数�
 ## 安装
 go get github.com/loudbund/go-mysql
 
-## 配置文件示例
+## 配置文件示例 test.conf
 ```db.conf
 # 默认数据库
 [db_default]
@@ -53,6 +53,7 @@ handle2 := mysql_v1.Handle("test", "user")
 ```
 
 ## 数据库常规操作-表内容调整 函数
+Insert将返回自增id和异常，其他的只返回异常
 ```golang
 mysql_v1.Handle().Insert
 mysql_v1.Handle().InsertManyTransaction
@@ -62,6 +63,8 @@ mysql_v1.Handle().Delete
 ```
 
 ## 数据库常规操作-数据检索 函数
+1. 批量读取返回格式都是[]map[string]interface{}，
+2. QueryTableOne读取单条数据，返回格式map[string]interface{}，未取到时为nil
 ```golang
 mysql_v1.Handle().Query
 mysql_v1.Handle().QueryRaw
@@ -70,6 +73,7 @@ mysql_v1.Handle().QueryTableOne
 ```
 
 ## 表信息获取 函数
+NameAllDbs返回的数据库过滤掉了 mysql、information_schema、test 三个库名
 ```golang
 mysql_v1.Handle().NameAllDbs
 mysql_v1.Handle().NameAllTablesOneDb
@@ -83,7 +87,7 @@ mysql_v1.Handle().Exec
 mysql_v1.Handle().QueryAllCircle
 ```
 ## 特殊函数 QueryAllCircle
-快速遍历数据表的特殊封装，其原理是按主键排序快速取出数据，取数据的条件只有主键id，故速度非常快，可以达到10万/秒
+快速遍历数据表的特殊封装，其原理是按主键排序快速取出数据，取数据的条件只有主键id，所以读取速度非常快，可以达到10万/秒
 ```golang
 
 Len :=0
