@@ -47,9 +47,9 @@ func init() {
 2. 指定数据库配置  mysql_v1.Handle("test") , 将读取 [db_test] 段配置
 3. 指定数据库配置，指定数据库  mysql_v1.Handle("test","user") , 将读取 [db_test] 段配置, **数据库名换成user库**
 ```golang
-	handle := mysql_v1.Handle()
-    handle1 := mysql_v1.Handle("test")
-    handle2 := mysql_v1.Handle("test", "user")
+handle := mysql_v1.Handle()
+handle1 := mysql_v1.Handle("test")
+handle2 := mysql_v1.Handle("test", "user")
 ```
 
 ## 数据库常规操作-表内容调整 函数
