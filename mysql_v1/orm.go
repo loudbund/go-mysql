@@ -6,11 +6,13 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/larspensjo/config"
 	log "github.com/sirupsen/logrus"
+	"sync"
 )
 
 // 全局变量 -------------------------------------------------------------------------
 var (
 	handles    = make(map[string]*ormMysql) // 实例句柄
+	handleLock = sync.RWMutex{}             // 实例句柄操作锁
 	pathConfig = ""                         // 配置文件地址
 	dbSections = map[string]string{}        // 名称=> 数据库
 )
@@ -64,8 +66,14 @@ func getConnectedHandle(dbCfgName string, varDbName ...string) (*ormMysql, error
 	var dbInstance = "dbInstance|" + dbCfgName + "|" + dbName
 
 	// 句柄已存在，直接返回
-	if _, ok := handles[dbInstance]; ok {
-		return handles[dbInstance], nil
+	if true {
+		handleLock.Lock()
+		_, ok := handles[dbInstance]
+		handleLock.Unlock()
+
+		if ok {
+			return handles[dbInstance], nil
+		}
 	}
 
 	// 读取配置文件
@@ -91,13 +99,19 @@ func getConnectedHandle(dbCfgName string, varDbName ...string) (*ormMysql, error
 	dbHandle.SetMaxOpenConns(maxConn)
 	dbHandle.SetMaxIdleConns(maxIdle)
 
-	handles[dbInstance] = new(ormMysql)
-	handles[dbInstance].o = dbHandle
-	handles[dbInstance].dbInstance = dbInstance
-	handles[dbInstance].dbCfgName = dbCfgName
-	handles[dbInstance].dbName = dbName
+	oneHandle := &ormMysql{
+		o:          dbHandle,
+		dbInstance: dbInstance,
+		dbCfgName:  dbCfgName,
+		dbName:     dbName,
+		initErr:    false,
+	}
 
-	return handles[dbInstance], nil
+	handleLock.Lock()
+	handles[dbInstance] = oneHandle
+	handleLock.Unlock()
+
+	return oneHandle, nil
 }
 
 // @Title 获取数据库句柄，所有配置信息从配置文件读取
