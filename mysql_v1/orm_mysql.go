@@ -204,10 +204,22 @@ func (Me ormMysql) Replace(mixTable string, row map[string]interface{}) error {
 	}
 
 	// 3、写入后数据的自增Id：写入数据后数据库生成的
-	if _, err := Me.o.Exec(`
-		replace into `+KeyTable+`(`+strings.Join(KeyFields, ",")+`)
-		values (`+strings.Join(KeyFieldFlag, ",")+`)`,
-		KeyValues...); err != nil {
+	// 执行sql
+	var KeyP *sql.Stmt
+	if p, err := Me.o.Prepare(`
+		replace into ` + KeyTable + `(` + strings.Join(KeyFields, ",") + `)
+		values (` + strings.Join(KeyFieldFlag, ",") + `)`); err != nil {
+		log.Error(err)
+		return err
+	} else {
+		KeyP = p
+	}
+	if _, err := KeyP.Exec(KeyValues...); err != nil {
+		_ = KeyP.Close()
+		log.Error(err)
+		return err
+	}
+	if err := KeyP.Close(); err != nil { // 别忘记关闭 statement
 		log.Error(err)
 		return err
 	}
