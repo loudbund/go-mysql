@@ -629,6 +629,11 @@ func (Me ormMysql) QueryAllCircle(Cfg UFastQuery, backFunc func(V map[string]int
 	return nil
 }
 
+// 特殊3：获取句柄,外部要执行大型事务等场合用
+func (Me ormMysql) GetDb() *sql.DB {
+	return Me.o
+}
+
 // 获取insert的sql和参数
 func (Me ormMysql) UtilInsert(table string, row map[string]interface{}) (string, []interface{}) {
 	// 1、条件参数：从参数里拼凑
