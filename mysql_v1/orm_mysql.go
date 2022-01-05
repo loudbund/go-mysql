@@ -41,13 +41,13 @@ type UFastQuery struct {
 // 数据操作1： 写入数据
 // 示例:
 // 	err := Insert("user" , map[string]interface{}{ "user_id":123,"user_name":"张三"} )
-func (Me ormMysql) Insert(table string, row map[string]interface{}) (int64, error) {
+func (Me ormMysql) Insert(table string, row map[string]interface{}, ignore ...bool) (int64, error) {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
 		return 0, errors.New("数据库未连接成功:" + Me.dbCfgName + " . " + Me.dbName)
 	}
 
-	KeySql, KeyValues := Me.UtilInsert(table, row)
+	KeySql, KeyValues := Me.UtilInsert(table, row, ignore...)
 
 	// 2、写入后数据的自增Id：写入数据后数据库生成的
 	KeyId := int64(0)
@@ -635,7 +635,7 @@ func (Me ormMysql) GetDb() *sql.DB {
 }
 
 // 获取insert的sql和参数
-func (Me ormMysql) UtilInsert(table string, row map[string]interface{}) (string, []interface{}) {
+func (Me ormMysql) UtilInsert(table string, row map[string]interface{}, ignore ...bool) (string, []interface{}) {
 	// 1、条件参数：从参数里拼凑
 	KeyFields := make([]string, 0)
 	KeyFieldFlag := make([]string, 0)
@@ -647,8 +647,13 @@ func (Me ormMysql) UtilInsert(table string, row map[string]interface{}) (string,
 	}
 
 	// 2、写入后数据的自增Id：写入数据后数据库生成的
+	// 增加上ignore
+	sqlIgnore := ""
+	if len(ignore) > 0 && ignore[0] {
+		sqlIgnore = " ignore"
+	}
 	KeySql := `
-		insert into ` + table + `(` + strings.Join(KeyFields, ",") + `)
+		insert ` + sqlIgnore + ` into ` + table + `(` + strings.Join(KeyFields, ",") + `)
 		values (` + strings.Join(KeyFieldFlag, ",") + `)`
 	return KeySql, KeyValues
 }

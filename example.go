@@ -52,6 +52,22 @@ func Insert() int64 {
 	return id
 }
 
+// 3、写入数据
+func InsertIgnore() int64 {
+	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
+	fmt.Println("========= Start InsertIgnore ============")
+
+	id, err := mysql_v1.Handle().Insert("demo", map[string]interface{}{
+		"id":      1,
+		"status":  1,
+		"debug":   "test Insert",
+		"creator": "123",
+	}, true)
+	fmt.Println(id, err)
+
+	return id
+}
+
 // 4、写入多条
 func InsertMany() {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
@@ -244,6 +260,9 @@ func Exec() {
 
 func main() {
 	Exec()
+
+	IdA := InsertIgnore()
+	fmt.Println("InsertIgnore 返回id：", IdA)
 
 	// 数据调整操作
 	Id := Insert()
