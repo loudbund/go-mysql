@@ -47,22 +47,11 @@ func (Me ormMysql) Insert(table string, row map[string]interface{}) (int64, erro
 		return 0, errors.New("数据库未连接成功:" + Me.dbCfgName + " . " + Me.dbName)
 	}
 
-	// 1、条件参数：从参数里拼凑
-	KeyFields := make([]string, 0)
-	KeyFieldFlag := make([]string, 0)
-	KeyValues := make([]interface{}, 0)
-	for k, v := range row {
-		KeyFields = append(KeyFields, "`"+k+"`")
-		KeyFieldFlag = append(KeyFieldFlag, "?")
-		KeyValues = append(KeyValues, v)
-	}
+	KeySql, KeyValues := Me.UtilInsert(table, row)
 
 	// 2、写入后数据的自增Id：写入数据后数据库生成的
 	KeyId := int64(0)
-	if res, err := Me.o.Exec(`
-		insert into `+table+`(`+strings.Join(KeyFields, ",")+`)
-		values (`+strings.Join(KeyFieldFlag, ",")+`)`,
-		KeyValues...); err != nil {
+	if res, err := Me.o.Exec(KeySql, KeyValues...); err != nil {
 		log.Error(err)
 		return 0, err
 	} else {
@@ -145,32 +134,10 @@ func (Me ormMysql) Update(mixTable string, row map[string]interface{}, condition
 		return errors.New("数据库未连接成功:" + Me.dbCfgName + " . " + Me.dbName)
 	}
 
-	// 1、参数拼凑
-	KeyConditionFields := make([]string, 0)
-	KeyUpdateFields := make([]string, 0)
-	KeyValues := make([]interface{}, 0)
-	for k, v := range row {
-		KeyUpdateFields = append(KeyUpdateFields, "`"+k+"`=?")
-		KeyValues = append(KeyValues, v)
-	}
-	for k, v := range conditions {
-		KeyConditionFields = append(KeyConditionFields, "`"+k+"`=?")
-		KeyValues = append(KeyValues, v)
-	}
-
-	// 2、数据表名处理
-	KeyTable := "`" + mixTable + "`"
-	if strings.Contains(mixTable, ".") {
-		KeyTable = mixTable
-	}
+	KeySql, KeyValues := Me.UtilUpdate(mixTable, row, conditions)
 
 	// 3、执行
-	if _, err := Me.o.Exec(`
-			update `+KeyTable+`
-			set `+strings.Join(KeyUpdateFields, ",")+`
-			where `+strings.Join(KeyConditionFields, " and ")+`
-		`,
-		KeyValues...); err != nil {
+	if _, err := Me.o.Exec(KeySql, KeyValues...); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -187,39 +154,10 @@ func (Me ormMysql) Replace(mixTable string, row map[string]interface{}) error {
 		return errors.New("数据库未连接成功:" + Me.dbCfgName + " . " + Me.dbName)
 	}
 
-	// 1、条件参数：从参数里拼凑
-	KeyFields := make([]string, 0)
-	KeyFieldFlag := make([]string, 0)
-	KeyValues := make([]interface{}, 0)
-	for k, v := range row {
-		KeyFields = append(KeyFields, "`"+k+"`")
-		KeyFieldFlag = append(KeyFieldFlag, "?")
-		KeyValues = append(KeyValues, v)
-	}
+	KeySql, KeyValues := Me.UtilReplace(mixTable, row)
 
-	// 2、数据表名处理
-	KeyTable := "`" + mixTable + "`"
-	if strings.Contains(mixTable, ".") {
-		KeyTable = mixTable
-	}
-
-	// 3、写入后数据的自增Id：写入数据后数据库生成的
-	// 执行sql
-	var KeyP *sql.Stmt
-	if p, err := Me.o.Prepare(`
-		replace into ` + KeyTable + `(` + strings.Join(KeyFields, ",") + `)
-		values (` + strings.Join(KeyFieldFlag, ",") + `)`); err != nil {
-		log.Error(err)
-		return err
-	} else {
-		KeyP = p
-	}
-	if _, err := KeyP.Exec(KeyValues...); err != nil {
-		_ = KeyP.Close()
-		log.Error(err)
-		return err
-	}
-	if err := KeyP.Close(); err != nil { // 别忘记关闭 statement
+	// 3、执行
+	if _, err := Me.o.Exec(KeySql, KeyValues...); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -236,25 +174,10 @@ func (Me ormMysql) Delete(mixTable string, conditions map[string]interface{}) er
 		return errors.New("数据库未连接成功:" + Me.dbCfgName + " . " + Me.dbName)
 	}
 
-	// 拼凑sql
-	var (
-		fields []string
-		values []interface{}
-		err    error
-	)
-	for k, v := range conditions {
-		fields = append(fields, "`"+k+"`=?")
-		values = append(values, v)
-	}
-	table := "`" + mixTable + "`"
-	if strings.Contains(mixTable, ".") {
-		table = mixTable
-	}
-	Sql := "delete from " + table + " where " + strings.Join(fields, " and ")
+	KeySql, KeyValues := Me.UtilDelete(mixTable, conditions)
 
 	// 执行sql
-	_, err = Me.o.Exec(Sql, values...)
-	if err != nil {
+	if _, err := Me.o.Exec(KeySql, KeyValues...); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -704,6 +627,101 @@ func (Me ormMysql) QueryAllCircle(Cfg UFastQuery, backFunc func(V map[string]int
 		}
 	}
 	return nil
+}
+
+// 获取insert的sql和参数
+func (Me ormMysql) UtilInsert(table string, row map[string]interface{}) (string, []interface{}) {
+	// 1、条件参数：从参数里拼凑
+	KeyFields := make([]string, 0)
+	KeyFieldFlag := make([]string, 0)
+	KeyValues := make([]interface{}, 0)
+	for k, v := range row {
+		KeyFields = append(KeyFields, "`"+k+"`")
+		KeyFieldFlag = append(KeyFieldFlag, "?")
+		KeyValues = append(KeyValues, v)
+	}
+
+	// 2、写入后数据的自增Id：写入数据后数据库生成的
+	KeySql := `
+		insert into ` + table + `(` + strings.Join(KeyFields, ",") + `)
+		values (` + strings.Join(KeyFieldFlag, ",") + `)`
+	return KeySql, KeyValues
+}
+
+// 获取replace的sql和参数
+func (Me ormMysql) UtilReplace(mixTable string, row map[string]interface{}) (string, []interface{}) {
+	// 1、条件参数：从参数里拼凑
+	KeyFields := make([]string, 0)
+	KeyFieldFlag := make([]string, 0)
+	KeyValues := make([]interface{}, 0)
+	for k, v := range row {
+		KeyFields = append(KeyFields, "`"+k+"`")
+		KeyFieldFlag = append(KeyFieldFlag, "?")
+		KeyValues = append(KeyValues, v)
+	}
+
+	// 2、数据表名处理
+	KeyTable := "`" + mixTable + "`"
+	if strings.Contains(mixTable, ".") {
+		KeyTable = mixTable
+	}
+
+	// 3、拼凑sql
+	KeySql := `
+		replace into ` + KeyTable + `(` + strings.Join(KeyFields, ",") + `)
+		values (` + strings.Join(KeyFieldFlag, ",") + `)`
+	return KeySql, KeyValues
+}
+
+// 获取update的sql和参数
+func (Me ormMysql) UtilUpdate(mixTable string, row map[string]interface{}, conditions map[string]interface{}) (string, []interface{}) {
+	// 1、参数拼凑
+	KeyConditionFields := make([]string, 0)
+	KeyUpdateFields := make([]string, 0)
+	KeyValues := make([]interface{}, 0)
+	for k, v := range row {
+		KeyUpdateFields = append(KeyUpdateFields, "`"+k+"`=?")
+		KeyValues = append(KeyValues, v)
+	}
+	for k, v := range conditions {
+		KeyConditionFields = append(KeyConditionFields, "`"+k+"`=?")
+		KeyValues = append(KeyValues, v)
+	}
+
+	// 2、数据表名处理
+	KeyTable := "`" + mixTable + "`"
+	if strings.Contains(mixTable, ".") {
+		KeyTable = mixTable
+	}
+
+	// 3、执行
+	KeySql := `
+			update ` + KeyTable + `
+			set ` + strings.Join(KeyUpdateFields, ",") + `
+			where ` + strings.Join(KeyConditionFields, " and ") + `
+		`
+	return KeySql, KeyValues
+}
+
+// 获取delete的sql和参数
+func (Me ormMysql) UtilDelete(mixTable string, conditions map[string]interface{}) (string, []interface{}) {
+
+	// 拼凑sql
+	var (
+		fields []string
+		values []interface{}
+	)
+	for k, v := range conditions {
+		fields = append(fields, "`"+k+"`=?")
+		values = append(values, v)
+	}
+	table := "`" + mixTable + "`"
+	if strings.Contains(mixTable, ".") {
+		table = mixTable
+	}
+	Sql := "delete from " + table + " where " + strings.Join(fields, " and ")
+
+	return Sql, values
 }
 
 // 辅助函数1: sql条件拼凑处理
