@@ -780,9 +780,11 @@ func utilScan(List *sql.Rows) ([]map[string]interface{}, error) {
 				value = strconv.Itoa(inst)
 			case []byte:
 				value = string(inst)
+			case float64:
+				value = strconv.FormatFloat(inst, 'E', -1, 64)
 			default:
 				value = v
-				log.Panic(fields[i], "default")
+				log.Panic(fields[i], " default")
 			}
 			row[fields[i]] = value
 		}

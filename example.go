@@ -44,6 +44,7 @@ func Insert() int64 {
 
 	id, err := mysql_v1.Handle().Insert("demo", map[string]interface{}{
 		"status":  1,
+		"stars":   1.1,
 		"debug":   "test Insert",
 		"creator": "123",
 	})
@@ -246,9 +247,10 @@ func Exec() {
 		CREATE TABLE demo (
 			id int(11) NOT NULL AUTO_INCREMENT,
 			status tinyint(4) DEFAULT NULL,
+			stars double(5,2) DEFAULT NULL COMMENT '推荐指数',
 			debug varchar(255) NOT NULL DEFAULT '' COMMENT '数据变更说明',
-		creator varchar(20) NOT NULL DEFAULT '' COMMENT '创建者',
-		created timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			creator varchar(20) NOT NULL DEFAULT '' COMMENT '创建者',
+			created timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 			PRIMARY KEY (id)
 		) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COMMENT='测试数据表'
