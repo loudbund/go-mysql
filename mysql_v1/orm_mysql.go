@@ -348,7 +348,7 @@ func (Me ormMysql) QueryTableOne(table string, fields string, Condition ...map[s
 	}
 
 	// 3、查询数据
-	KeyRetData := map[string]interface{}{}
+	var KeyRetData map[string]interface{} = nil
 	if data, err := Me.QueryTable(table, fields, KeyConditions, KeyOption); err != nil {
 		return KeyRetData, err
 	} else {
