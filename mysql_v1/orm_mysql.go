@@ -240,7 +240,7 @@ func (Me ormMysql) Query(sql string, ConOpt ...map[string]interface{}) ([]map[st
 // 数据读取2： 常规读取(直接执行参数sql和参数)
 // 示例:
 //	data,err:=QueryRow("select * from demo where id=?",[]interface{}{123})
-func (Me ormMysql) QueryRaw(qSql string, qArgs ...interface{}) ([]map[string]interface{}, error) {
+func (Me ormMysql) QueryRaw(qSql string, qArgs []interface{}) ([]map[string]interface{}, error) {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
 		return nil, errors.New("数据库未连接成功:" + Me.dbCfgName + " . " + Me.dbName)
