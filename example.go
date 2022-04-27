@@ -11,7 +11,7 @@ func init() {
 	mysql_v1.Init("test.conf")
 }
 
-// 1、全表快速读取
+// 全表快速读取
 func QueryAllCircle() {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("Start QueryAllCircle")
@@ -37,7 +37,7 @@ func QueryAllCircle() {
 	fmt.Println(Len)
 }
 
-// 3、写入数据
+// 写入数据
 func Insert() int64 {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("========= Start Insert ============")
@@ -53,7 +53,7 @@ func Insert() int64 {
 	return id
 }
 
-// 3、写入数据
+// 写入数据,忽略掉已存在的
 func InsertIgnore() int64 {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("========= Start InsertIgnore ============")
@@ -69,7 +69,7 @@ func InsertIgnore() int64 {
 	return id
 }
 
-// 4、写入多条
+// 写入多条
 func InsertMany() {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("========= Start InsertMany ============")
@@ -84,7 +84,7 @@ func InsertMany() {
 	fmt.Println(err)
 }
 
-// 2、数据查询
+// 数据更新
 func Update(Id int64) {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("========= Start Update ============")
@@ -101,7 +101,7 @@ func Update(Id int64) {
 	}
 }
 
-// 2、数据查询
+// 数据写入替换
 func Replace(Id int64) {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("========= Start Replace ============")
@@ -117,7 +117,7 @@ func Replace(Id int64) {
 	}
 }
 
-// 2、数据查询
+// 数据查询-=
 func Query(Id interface{}) {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("========= Start Query ============")
@@ -138,7 +138,30 @@ func Query(Id interface{}) {
 	}
 }
 
-// 2、数据查询
+// 数据查询-like
+func QueryIn() {
+	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
+	fmt.Println("========= Start Query In ============")
+
+	// 1、读取数据
+	data, err := mysql_v1.Handle().Query("select * from demo where id in (::ids)", map[string]interface{}{
+		"ids": []interface{}{
+			1, 2, 11,
+		},
+	})
+	if err != nil {
+		log.Panic(err)
+	}
+
+	// 2、打印结果
+	for k, v := range data {
+		for m, n := range v {
+			fmt.Println(k, m, n)
+		}
+	}
+}
+
+// 数据删除
 func Delete(Id int64) {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("========= Start Delete ============")
@@ -152,6 +175,7 @@ func Delete(Id int64) {
 	}
 }
 
+// 数据查询
 func QueryRaw() {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("========= Start QueryRaw ============")
@@ -169,6 +193,7 @@ func QueryRaw() {
 	}
 }
 
+// 指定表数据查询
 func QueryTable() {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("========= Start QueryTable ============")
@@ -180,6 +205,7 @@ func QueryTable() {
 	fmt.Println(len(data))
 }
 
+// 指定表查询一条数据
 func QueryTableOne() {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("========= Start QueryTableOne ============")
@@ -191,6 +217,7 @@ func QueryTableOne() {
 	fmt.Println(len(data))
 }
 
+// 显示创建表语句
 func ShowCreateTable() {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("========= Start ShowCreateTable ============")
@@ -202,6 +229,7 @@ func ShowCreateTable() {
 	fmt.Println(Sql)
 }
 
+// 显示表结构
 func DescTable() {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("========= Start DescTable ============")
@@ -214,6 +242,8 @@ func DescTable() {
 		fmt.Println(k, v)
 	}
 }
+
+// 显示所有库
 func NameAllDbs() {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("========= Start NameAllDbs ============")
@@ -226,6 +256,8 @@ func NameAllDbs() {
 		fmt.Println(k, v)
 	}
 }
+
+// 显示一个库里所有表
 func NameAllTablesOneDb() {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("========= Start NameAllTablesOneDb ============")
@@ -239,6 +271,7 @@ func NameAllTablesOneDb() {
 	}
 }
 
+// 直接执行
 func Exec() {
 	defer func(T time.Time) { fmt.Println(time.Since(T).String()) }(time.Now())
 	fmt.Println("========= Start Exec ============")
@@ -276,16 +309,17 @@ func main() {
 
 	// 数据检索
 	Query(Id + 1)
+	QueryIn()
 	QueryRaw()
 	QueryTable()
 	QueryTableOne()
 
-	// 库表信息获取
-	NameAllDbs()
-	NameAllTablesOneDb()
-	ShowCreateTable()
-	DescTable()
-
 	// 快速批量获取
 	QueryAllCircle()
+
+	// 库表信息获取
+	ShowCreateTable()
+	DescTable()
+	NameAllDbs()
+	NameAllTablesOneDb()
 }

@@ -239,14 +239,14 @@ func (Me ormMysql) Query(sql string, ConOpt ...map[string]interface{}) ([]map[st
 
 // 数据读取2： 常规读取(直接执行参数sql和参数)
 // 示例:
-//	data,err:=QueryRow("select * from demo where id=?",[]interface{}{123})
-func (Me ormMysql) QueryRaw(qSql string, qArgs []interface{}) ([]map[string]interface{}, error) {
+//	data,err:=QueryRow("select * from demo where id='123'")
+func (Me ormMysql) QueryRaw(qSql string) ([]map[string]interface{}, error) {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
 		return nil, errors.New("数据库未连接成功:" + Me.dbCfgName + " . " + Me.dbName)
 	}
 
-	List, err := Me.o.Query(qSql, qArgs...)
+	List, err := Me.o.Query(qSql)
 	if err != nil {
 		log.Error(err)
 		return nil, err
@@ -741,13 +741,22 @@ func (Me ormMysql) UtilDelete(mixTable string, conditions map[string]interface{}
 //    )
 func utilMakeCondition(sql string, conditions map[string]interface{}) (string, []interface{}) {
 	// 查找连续的单词字母
-	var retArgs []interface{}
-	retSql := regexp.MustCompile(`:[\w]+`).ReplaceAllStringFunc(sql, func(s string) string {
-		retArgs = append(retArgs, conditions[s[1:]])
+	KeyArgs := make([]interface{}, 0)
+	KeySql := regexp.MustCompile(`:[:]?[\w]+`).ReplaceAllStringFunc(sql, func(s string) string {
+		// ::符号，针对in方式连续变量处理
+		if s[:2] == "::" {
+			qMarkArr := make([]string, 0)
+			for _, v := range conditions[s[2:]].([]interface{}) {
+				KeyArgs = append(KeyArgs, v)
+				qMarkArr = append(qMarkArr, "?")
+			}
+			return strings.Join(qMarkArr, ",")
+		}
+		KeyArgs = append(KeyArgs, conditions[s[1:]])
 		return "?"
 	})
 
-	return retSql, retArgs
+	return KeySql, KeyArgs
 }
 
 // 辅助函数2: mysql查询结果数据转换成map数组数据
