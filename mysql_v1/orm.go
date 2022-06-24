@@ -77,7 +77,7 @@ func getConnectedHandle(dbCfgName string, varDbName ...string) (*ormMysql, error
 	}
 
 	// 读取配置文件
-	host, port, db, username, password, charset, maxIdle, maxConn, err := getDbConfig("db_" + dbCfgName)
+	host, port, db, username, password, charset, maxIdle, maxConn, interpolateParams, err := getDbConfig("db_" + dbCfgName)
 	if err != nil {
 		log.Error("读取配置文件出错:" + err.Error())
 		return nil, err
@@ -89,8 +89,11 @@ func getConnectedHandle(dbCfgName string, varDbName ...string) (*ormMysql, error
 	}
 
 	// 连接数据库
-
-	dbHandle, err := sql.Open("mysql", username+":"+password+"@tcp("+host+":"+port+")/"+db+"?charset="+charset)
+	dataSourceName := username + ":" + password + "@tcp(" + host + ":" + port + ")/" + db + "?charset=" + charset
+	if interpolateParams {
+		dataSourceName += "&interpolateParams=true"
+	}
+	dbHandle, err := sql.Open("mysql", dataSourceName)
 	if err != nil {
 		log.Error(err)
 		log.Error("数据库:"+dbCfgName+" . "+dbName, " 连接失败")
@@ -132,13 +135,13 @@ func Handle(Name ...string) *ormMysql {
 }
 
 // @Title 获取配置文件
-func getDbConfig(name string) (host string, port string, db string, username string, password string, charset string, maxIdle int, maxConn int, err error) {
+func getDbConfig(name string) (host string, port string, db string, username string, password string, charset string, maxIdle int, maxConn int, interpolateParams bool, err error) {
 
 	// 读取配置文件
 	cfg, err := config.ReadDefault(pathConfig)
 	if err != nil {
 		log.Error("读取配置文件出错" + err.Error())
-		return "", "", "", "", "", "", 0, 0, err
+		return "", "", "", "", "", "", 0, 0, false, err
 	}
 
 	// 取出配置项
@@ -150,11 +153,12 @@ func getDbConfig(name string) (host string, port string, db string, username str
 	charset, charsetErr := cfg.String(name, "charset")
 	maxIdle, maxIdleErr := cfg.Int(name, "maxIdle")
 	maxConn, maxConnErr := cfg.Int(name, "maxConn")
+	interpolateParams, _ = cfg.Bool(name, "interpolateParams")
 
 	// 主配置项出错
 	if hostErr != nil || usernameErr != nil || passwordErr != nil {
 		log.Error("出错")
-		return "", "", "", "", "", "", 0, 0, errors.New(name + "数据库主配置项为空")
+		return "", "", "", "", "", "", 0, 0, false, errors.New(name + "数据库主配置项为空")
 	}
 
 	// 可设置默认值配置项
@@ -169,5 +173,5 @@ func getDbConfig(name string) (host string, port string, db string, username str
 	}
 
 	// 返回
-	return host, port, db, username, password, charset, maxIdle, maxConn, nil
+	return host, port, db, username, password, charset, maxIdle, maxConn, interpolateParams, nil
 }
