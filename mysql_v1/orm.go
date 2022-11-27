@@ -7,6 +7,7 @@ import (
 	"github.com/larspensjo/config"
 	log "github.com/sirupsen/logrus"
 	"sync"
+	"time"
 )
 
 // 全局变量 -------------------------------------------------------------------------
@@ -77,7 +78,7 @@ func getConnectedHandle(dbCfgName string, varDbName ...string) (*ormMysql, error
 	}
 
 	// 读取配置文件
-	host, port, db, username, password, charset, maxIdle, maxConn, interpolateParams, err := getDbConfig("db_" + dbCfgName)
+	host, port, db, username, password, charset, maxIdle, maxConn, interpolateParams, maxLifetime, err := getDbConfig("db_" + dbCfgName)
 	if err != nil {
 		log.Error("读取配置文件出错:" + err.Error())
 		return nil, err
@@ -101,6 +102,7 @@ func getConnectedHandle(dbCfgName string, varDbName ...string) (*ormMysql, error
 	}
 	dbHandle.SetMaxOpenConns(maxConn)
 	dbHandle.SetMaxIdleConns(maxIdle)
+	dbHandle.SetConnMaxLifetime(time.Second * time.Duration(maxLifetime))
 
 	oneHandle := &ormMysql{
 		o:          dbHandle,
@@ -135,13 +137,13 @@ func Handle(Name ...string) *ormMysql {
 }
 
 // @Title 获取配置文件
-func getDbConfig(name string) (host string, port string, db string, username string, password string, charset string, maxIdle int, maxConn int, interpolateParams bool, err error) {
+func getDbConfig(name string) (host string, port string, db string, username string, password string, charset string, maxIdle int, maxConn int, interpolateParams bool, maxLifetime int, err error) {
 
 	// 读取配置文件
 	cfg, err := config.ReadDefault(pathConfig)
 	if err != nil {
 		log.Error("读取配置文件出错" + err.Error())
-		return "", "", "", "", "", "", 0, 0, false, err
+		return "", "", "", "", "", "", 0, 0, false, 0, err
 	}
 
 	// 取出配置项
@@ -154,11 +156,12 @@ func getDbConfig(name string) (host string, port string, db string, username str
 	maxIdle, maxIdleErr := cfg.Int(name, "maxIdle")
 	maxConn, maxConnErr := cfg.Int(name, "maxConn")
 	interpolateParams, _ = cfg.Bool(name, "interpolateParams")
+	maxLifetime, _ = cfg.Int(name, "maxLifetime")
 
 	// 主配置项出错
 	if hostErr != nil || usernameErr != nil || passwordErr != nil {
 		log.Error("出错")
-		return "", "", "", "", "", "", 0, 0, false, errors.New(name + "数据库主配置项为空")
+		return "", "", "", "", "", "", 0, 0, false, 0, errors.New(name + "数据库主配置项为空")
 	}
 
 	// 可设置默认值配置项
@@ -171,7 +174,10 @@ func getDbConfig(name string) (host string, port string, db string, username str
 	if maxConnErr != nil {
 		maxConn = 20
 	}
+	if maxLifetime == 0 { // 默认4个小时过期
+		maxLifetime = 4 * 60 * 60
+	}
 
 	// 返回
-	return host, port, db, username, password, charset, maxIdle, maxConn, interpolateParams, nil
+	return host, port, db, username, password, charset, maxIdle, maxConn, interpolateParams, maxLifetime, nil
 }
