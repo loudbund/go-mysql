@@ -19,7 +19,7 @@ type ormMysql struct {
 	initErr    bool    // 初始化成功标记 0:未成功，1:成功
 }
 
-// 结构体2：字段信息结构体
+// UTbDesc 结构体2：字段信息结构体
 type UTbDesc struct {
 	Field  string // 字段名
 	IsPri  bool   // 是否为主键
@@ -27,7 +27,7 @@ type UTbDesc struct {
 	Length int    // 字段长度
 }
 
-// 结构体3：批量快速读取配置参数
+// UFastQuery 结构体3：批量快速读取配置参数
 type UFastQuery struct {
 	Table          string      // 表名
 	Fields         string      // 检索的字段
@@ -38,9 +38,10 @@ type UFastQuery struct {
 	BeginValIgnore bool        // 是否包含起点
 }
 
-// 数据操作1： 写入数据
+// Insert 数据操作1： 写入数据
 // 示例:
-// 	err := Insert("user" , map[string]interface{}{ "user_id":123,"user_name":"张三"} )
+//
+//	err := Insert("user" , map[string]interface{}{ "user_id":123,"user_name":"张三"} )
 func (Me ormMysql) Insert(table string, row map[string]interface{}, ignore ...bool) (int64, error) {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
@@ -60,9 +61,10 @@ func (Me ormMysql) Insert(table string, row map[string]interface{}, ignore ...bo
 	return KeyId, nil
 }
 
-// 数据操作2： 批量写入数据
+// InsertManyTransaction 数据操作2： 批量写入数据
 // 示例:
-// 	err := InsertManyTransaction("user" , []map[string]interface{}{ {"user_id":123,"user_name":"张三"} } )
+//
+//	err := InsertManyTransaction("user" , []map[string]interface{}{ {"user_id":123,"user_name":"张三"} } )
 func (Me ormMysql) InsertManyTransaction(table string, rows []map[string]interface{}, ignore ...bool) error {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
@@ -125,9 +127,10 @@ func (Me ormMysql) InsertManyTransaction(table string, rows []map[string]interfa
 	return nil
 }
 
-// 数据操作3： 修改数据
+// Update 数据操作3： 修改数据
 // 示例:
-//    err := Update("user" , map[string]interface{}{ "user_id":123,"user_name":"张三"} )
+//
+//	err := Update("user" , map[string]interface{}{ "user_id":123,"user_name":"张三"} )
 func (Me ormMysql) Update(mixTable string, row map[string]interface{}, conditions map[string]interface{}) error {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
@@ -145,9 +148,10 @@ func (Me ormMysql) Update(mixTable string, row map[string]interface{}, condition
 	return nil
 }
 
-// 数据操作4： 替换数据
+// Replace 数据操作4： 替换数据
 // 示例:
-//    err := Replace("user" , map[string]interface{}{ "user_id":123,"user_name":"张三"} )
+//
+//	err := Replace("user" , map[string]interface{}{ "user_id":123,"user_name":"张三"} )
 func (Me ormMysql) Replace(mixTable string, row map[string]interface{}) error {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
@@ -165,9 +169,10 @@ func (Me ormMysql) Replace(mixTable string, row map[string]interface{}) error {
 	return nil
 }
 
-// 数据操作5： 删除数据
+// Delete 数据操作5： 删除数据
 // 示例:
-//    err := Delete("user" , map[string]interface{}{ "user_id":123} )
+//
+//	err := Delete("user" , map[string]interface{}{ "user_id":123} )
 func (Me ormMysql) Delete(mixTable string, conditions map[string]interface{}) error {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
@@ -185,12 +190,13 @@ func (Me ormMysql) Delete(mixTable string, conditions map[string]interface{}) er
 	return nil
 }
 
-// 数据读取1： 常规读取(格式化sql)
+// Query 数据读取1： 常规读取(格式化sql)
 // 示例:
-//    maps := Query("select * from publish_homework_par_teacher where teacher_id=:teacher_id and class_id=:class_id" ,
-//        map[string]interface{}{ "teacher_id":teacher_id , "class_id":class_id } ,
-//        map[string]interface{}{ "offset":1 , "limit":10 } ,
-//    )
+//
+//	maps := Query("select * from publish_homework_par_teacher where teacher_id=:teacher_id and class_id=:class_id" ,
+//	    map[string]interface{}{ "teacher_id":teacher_id , "class_id":class_id } ,
+//	    map[string]interface{}{ "offset":1 , "limit":10 } ,
+//	)
 func (Me ormMysql) Query(sql string, ConOpt ...map[string]interface{}) ([]map[string]interface{}, error) {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
@@ -237,8 +243,9 @@ func (Me ormMysql) Query(sql string, ConOpt ...map[string]interface{}) ([]map[st
 	return KeyRows, nil
 }
 
-// 数据读取2： 常规读取(直接执行参数sql和参数)
+// QueryRaw 数据读取2： 常规读取(直接执行参数sql和参数)
 // 示例:
+//
 //	data,err:=QueryRow("select * from demo where id='123'")
 func (Me ormMysql) QueryRaw(qSql string) ([]map[string]interface{}, error) {
 	if Me.initErr {
@@ -261,12 +268,13 @@ func (Me ormMysql) QueryRaw(qSql string) ([]map[string]interface{}, error) {
 	return rows, nil
 }
 
-// 数据读取3： 指定数据表读取一批数据
+// QueryTable 数据读取3： 指定数据表读取一批数据
 // 示例:
-//    Data,err := QueryTable("publish_homework_par_teacher" , "*",
-//        map[string]interface{}{ "teacher_id":teacher_id , "class_id":class_id } ,
-//        map[string]interface{}{ "offset":1 , "limit":10 } ,
-//    )
+//
+//	Data,err := QueryTable("publish_homework_par_teacher" , "*",
+//	    map[string]interface{}{ "teacher_id":teacher_id , "class_id":class_id } ,
+//	    map[string]interface{}{ "offset":1 , "limit":10 } ,
+//	)
 func (Me ormMysql) QueryTable(table string, fields string, ConOpt ...map[string]interface{}) ([]map[string]interface{}, error) {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
@@ -324,11 +332,13 @@ func (Me ormMysql) QueryTable(table string, fields string, ConOpt ...map[string]
 	return rows, nil
 }
 
-// 数据读取4： 指定数据表读取一条数据
+// QueryTableOne 数据读取4： 指定数据表读取一条数据
 // 示例:
-//    Row,err := QueryTableOne("publish_homework_par_teacher" , "*",
-//        map[string]interface{}{ "teacher_id":teacher_id , "class_id":class_id } ,
-//    )
+//
+//	Row,err := QueryTableOne("publish_homework_par_teacher" , "*",
+//	    map[string]interface{}{ "teacher_id":teacher_id , "class_id":class_id } ,
+//	)
+//
 // 说明：未找到，返回的数据体为nil
 func (Me ormMysql) QueryTableOne(table string, fields string, Condition ...map[string]interface{}) (map[string]interface{}, error) {
 	if Me.initErr {
@@ -361,7 +371,7 @@ func (Me ormMysql) QueryTableOne(table string, fields string, Condition ...map[s
 	return KeyRetData, nil
 }
 
-// 表结构信息1：获取实例里全部数据库
+// NameAllDbs 表结构信息1：获取实例里全部数据库
 func (Me ormMysql) NameAllDbs(dbIgnores ...string) ([]string, error) {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
@@ -396,7 +406,7 @@ func (Me ormMysql) NameAllDbs(dbIgnores ...string) ([]string, error) {
 	return KeyRet, nil
 }
 
-// 表结构信息2：获取实例里指定数据库名的数据表
+// NameAllTablesOneDb 表结构信息2：获取实例里指定数据库名的数据表
 func (Me ormMysql) NameAllTablesOneDb() ([]string, error) {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
@@ -419,7 +429,7 @@ func (Me ormMysql) NameAllTablesOneDb() ([]string, error) {
 	return KeyRet, nil
 }
 
-// 表结构信息3：获取数据表创建语句
+// ShowCreateTable 表结构信息3：获取数据表创建语句
 func (Me ormMysql) ShowCreateTable(table string) (string, error) {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
@@ -446,7 +456,7 @@ func (Me ormMysql) ShowCreateTable(table string) (string, error) {
 	return KeySqlRet, nil
 }
 
-// 表结构信息4：获取数据表字段信息
+// DescTable 表结构信息4：获取数据表字段信息
 func (Me ormMysql) DescTable(tbName string) (map[string]UTbDesc, error) {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
@@ -481,9 +491,10 @@ func (Me ormMysql) DescTable(tbName string) (map[string]UTbDesc, error) {
 	return KeyTbDesc, nil
 }
 
-// 特殊1：直接执行sql
+// Exec 特殊1：直接执行sql
 // 示例:
-//    err := Exec("alter table user rename user_old" )
+//
+//	err := Exec("alter table user rename user_old" )
 func (Me ormMysql) Exec(Sql string) error {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
@@ -499,19 +510,20 @@ func (Me ormMysql) Exec(Sql string) error {
 	return nil
 }
 
-// 特殊2：mysql中获取全表数据
-// 	err := QueryAllCircle(mysql_v1.UFastQuery{
-// 		Table:           "tbl_resource_main",
-// 		Fields:          "*",
-// 		PriField:        "id",
-// 		PriSort:         "asc",
-// 		RowLimit:        2000,
-// 		// BeginVal:        3,
-// 		// beginValIgnore: true,
-// 	},func(data map[string]interface{}) bool{
-// 		fmt.Println(len(data))
-// 		return true	// true:继续 false：终止
-// 	})
+// QueryAllCircle 特殊2：mysql中获取全表数据
+//
+//	err := QueryAllCircle(mysql_v1.UFastQuery{
+//		Table:           "tbl_resource_main",
+//		Fields:          "*",
+//		PriField:        "id",
+//		PriSort:         "asc",
+//		RowLimit:        2000,
+//		// BeginVal:        3,
+//		// beginValIgnore: true,
+//	},func(data map[string]interface{}) bool{
+//		fmt.Println(len(data))
+//		return true	// true:继续 false：终止
+//	})
 func (Me ormMysql) QueryAllCircle(Cfg UFastQuery, backFunc func(V map[string]interface{}) bool) error {
 	if Me.initErr {
 		log.Error("数据库未连接成功", Me.dbCfgName, Me.dbName)
@@ -629,12 +641,12 @@ func (Me ormMysql) QueryAllCircle(Cfg UFastQuery, backFunc func(V map[string]int
 	return nil
 }
 
-// 特殊3：获取句柄,外部要执行大型事务等场合用
+// GetDb 特殊3：获取句柄,外部要执行大型事务等场合用
 func (Me ormMysql) GetDb() *sql.DB {
 	return Me.o
 }
 
-// 获取insert的sql和参数
+// UtilInsert 获取insert的sql和参数
 func (Me ormMysql) UtilInsert(table string, row map[string]interface{}, ignore ...bool) (string, []interface{}) {
 	// 1、条件参数：从参数里拼凑
 	KeyFields := make([]string, 0)
@@ -652,13 +664,14 @@ func (Me ormMysql) UtilInsert(table string, row map[string]interface{}, ignore .
 	if len(ignore) > 0 && ignore[0] {
 		sqlIgnore = " ignore"
 	}
+	table = "`" + strings.Trim(table, "`") + "`"
 	KeySql := `
 		insert ` + sqlIgnore + ` into ` + table + `(` + strings.Join(KeyFields, ",") + `)
 		values (` + strings.Join(KeyFieldFlag, ",") + `)`
 	return KeySql, KeyValues
 }
 
-// 获取replace的sql和参数
+// UtilReplace 获取replace的sql和参数
 func (Me ormMysql) UtilReplace(mixTable string, row map[string]interface{}) (string, []interface{}) {
 	// 1、条件参数：从参数里拼凑
 	KeyFields := make([]string, 0)
@@ -671,7 +684,7 @@ func (Me ormMysql) UtilReplace(mixTable string, row map[string]interface{}) (str
 	}
 
 	// 2、数据表名处理
-	KeyTable := "`" + mixTable + "`"
+	KeyTable := "`" + strings.Trim(mixTable, "`") + "`"
 	if strings.Contains(mixTable, ".") {
 		KeyTable = mixTable
 	}
@@ -683,7 +696,7 @@ func (Me ormMysql) UtilReplace(mixTable string, row map[string]interface{}) (str
 	return KeySql, KeyValues
 }
 
-// 获取update的sql和参数
+// UtilUpdate 获取update的sql和参数
 func (Me ormMysql) UtilUpdate(mixTable string, row map[string]interface{}, conditions map[string]interface{}) (string, []interface{}) {
 	// 1、参数拼凑
 	KeyConditionFields := make([]string, 0)
@@ -699,7 +712,7 @@ func (Me ormMysql) UtilUpdate(mixTable string, row map[string]interface{}, condi
 	}
 
 	// 2、数据表名处理
-	KeyTable := "`" + mixTable + "`"
+	KeyTable := "`" + strings.Trim(mixTable, "`") + "`"
 	if strings.Contains(mixTable, ".") {
 		KeyTable = mixTable
 	}
@@ -713,7 +726,7 @@ func (Me ormMysql) UtilUpdate(mixTable string, row map[string]interface{}, condi
 	return KeySql, KeyValues
 }
 
-// 获取delete的sql和参数
+// UtilDelete 获取delete的sql和参数
 func (Me ormMysql) UtilDelete(mixTable string, conditions map[string]interface{}) (string, []interface{}) {
 
 	// 拼凑sql
@@ -725,7 +738,7 @@ func (Me ormMysql) UtilDelete(mixTable string, conditions map[string]interface{}
 		fields = append(fields, "`"+k+"`=?")
 		values = append(values, v)
 	}
-	table := "`" + mixTable + "`"
+	table := "`" + strings.Trim(mixTable, "`") + "`"
 	if strings.Contains(mixTable, ".") {
 		table = mixTable
 	}
@@ -736,9 +749,10 @@ func (Me ormMysql) UtilDelete(mixTable string, conditions map[string]interface{}
 
 // 辅助函数1: sql条件拼凑处理
 // 示例：
-//    Sql,Args := utilMakeCondition("select * from publish_homework_par_teacher where teacher_id=:teacher_id and class_id=:class_id" ,
-//        map[string]interface{}{ "teacher_id":teacher_id , "class_id":class_id }
-//    )
+//
+//	Sql,Args := utilMakeCondition("select * from publish_homework_par_teacher where teacher_id=:teacher_id and class_id=:class_id" ,
+//	    map[string]interface{}{ "teacher_id":teacher_id , "class_id":class_id }
+//	)
 func utilMakeCondition(sql string, conditions map[string]interface{}) (string, []interface{}) {
 	// 查找连续的单词字母
 	KeyArgs := make([]interface{}, 0)
